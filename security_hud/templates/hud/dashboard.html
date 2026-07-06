@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYDRA DEFENSE — Security HUD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
+
+  :root {
+    --bg: #050a0e;
+    --panel: #081015;
+    --border: #0d2030;
+    --green: #00ff88;
+    --cyan: #00d4ff;
+    --yellow: #ffcc00;
+    --orange: #ff8800;
+    --red: #ff3355;
+    --dim: #1a3040;
+    --text: #c8e8f0;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Rajdhani', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    overflow: hidden;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 52px 1fr 180px;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 2px;
+    background-color: #020508;
+  }
+
+  /* ── HEADER ── */
+  header {
+    grid-column: 1 / -1;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+    position: relative;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 6px;
+    color: var(--cyan);
+    text-shadow: 0 0 20px var(--cyan);
+  }
+
+  .logo span { color: var(--green); }
+
+  .status-bar {
+    display: flex;
+    gap: 20px;
+    margin-left: auto;
+    align-items: center;
+  }
+
+  .status-pill {
+    padding: 3px 12px;
+    border-radius: 2px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-family: var(--sans);
+    font-weight: 500;
+  }
+
+  .status-pill.online { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid var(--green); }
+  .status-pill.offline { background: rgba(255,51,85,0.15); color: var(--red); border: 1px solid var(--red); }
+
+  #connection-status { }
+
+  .clock {
+    color: var(--cyan);
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-title {
+    padding: 8px 14px;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--cyan);
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* ── LEFT: AGENT STATUS ── */
+  .agent-panel { grid-column: 1; grid-row: 2; }
+
+  .agent-card {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--dim);
+  }
+
+  .agent-name {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  .agent-role {
+    font-size: 10px;
+    color: #5a7a8a;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .agent-bar {
+    height: 4px;
+    background: var(--dim);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .agent-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease, background 0.3s;
+  }
+
+  .agent-score {
+    font-size: 11px;
+    color: #4a6a7a;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .stat-box {
+    background: var(--panel);
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: var(--sans);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #3a5a6a;
+    text-transform: uppercase;
+  }
+
+  .stat-val.green { color: var(--green); text-shadow: 0 0 10px var(--green); }
+  .stat-val.yellow { color: var(--yellow); text-shadow: 0 0 10px var(--yellow); }
+  .stat-val.orange { color: var(--orange); text-shadow: 0 0 10px var(--orange); }
+  .stat-val.red { color: var(--red); text-shadow: 0 0 10px var(--red); }
+  .stat-val.cyan { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+
+  /* ── CENTER: LIVE FEED ── */
+  .feed-panel {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .feed-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--dim) transparent;
+  }
+
+  .event-row {
+    display: grid;
+    grid-template-columns: 90px 60px 80px 1fr 60px;
+    gap: 8px;
+    padding: 5px 14px;
+    border-bottom: 1px solid rgba(13,32,48,0.5);
+    align-items: center;
+    animation: slideIn 0.3s ease;
+    transition: background 0.2s;
+  }
+
+  .event-row:hover { background: rgba(0, 212, 255, 0.04); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .event-time { color: #3a5a6a; font-size: 11px; }
+
+  .action-badge {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: center;
+    font-family: var(--sans);
+    font-weight: 700;
+  }
+
+  .action-allow { background: rgba(0,255,136,0.12); color: var(--green); }
+  .action-monitor { background: rgba(255,204,0,0.12); color: var(--yellow); }
+  .action-quarantine { background: rgba(255,136,0,0.15); color: var(--orange); }
+  .action-block { background: rgba(255,51,85,0.15); color: var(--red); }
+
+  .event-ip { color: var(--cyan); font-size: 12px; }
+  .event-path { color: #7a9aaa; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .event-score { text-align: right; }
+
+  .score-bar {
+    height: 3px;
+    background: var(--dim);
+    border-radius: 1px;
+    margin-top: 3px;
+  }
+
+  /* ── RIGHT: AGENT LOG ── */
+  .log-panel {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .log-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--dim) transparent;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .log-line {
+    padding: 2px 6px;
+    border-radius: 2px;
+    margin-bottom: 1px;
+    word-break: break-word;
+  }
+
+  .log-line.sentry { color: #00aaff; }
+  .log-line.venom { color: #aa44ff; }
+  .log-line.hunter { color: #ffaa00; }
+  .log-line.strategist { color: var(--green); font-weight: bold; }
+  .log-line.system { color: #4a6a7a; font-style: italic; }
+
+  /* ── BOTTOM: THREAT MAP ── */
+  .bottom-panel {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .bottom-panel .panel-title { writing-mode: horizontal-tb; }
+
+  .threat-timeline {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 10px 14px;
+    overflow: hidden;
+  }
+
+  .timeline-bar {
+    flex: 1;
+    min-width: 6px;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.5s ease;
+    max-width: 20px;
+    cursor: pointer;
+  }
+
+  .timeline-bar:hover { opacity: 0.8; }
+
+  .threat-detail {
+    width: 300px;
+    padding: 10px 14px;
+    border-left: 1px solid var(--border);
+    font-size: 11px;
+    overflow: auto;
+    color: #4a7a8a;
+  }
+
+  .threat-detail .key { color: var(--cyan); }
+
+  /* ── SCANLINE EFFECT ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── GLOW PULSE on new events ── */
+  .flash { animation: flash 0.5s ease; }
+
+  @keyframes flash {
+    0% { background: rgba(0, 212, 255, 0.15); }
+    100% { background: transparent; }
+  }
+
+  .threat-high .event-row { border-left: 2px solid var(--red); }
+
+  #header-threat {
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-family: var(--sans);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">HYDRA <span>DEFENSE</span></div>
+  <div style="color:#3a5a6a; font-size:11px; letter-spacing:2px;">MULTI-AGENT SECURITY SYSTEM v2.0</div>
+  <div class="status-bar">
+    <span id="header-threat" style="background:rgba(0,255,136,0.1);color:var(--green);border:1px solid var(--green);">THREAT: LOW</span>
+    <span class="status-pill offline" id="connection-status">● CONNECTING</span>
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+</header>
+
+<!-- LEFT: Agent Status Panel -->
+<div class="panel agent-panel">
+  <div class="panel-title">⬡ Agent Status</div>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-val cyan" id="stat-total">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val green" id="stat-allowed">0</div>
+      <div class="stat-label">Allowed</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val orange" id="stat-quarantined">0</div>
+      <div class="stat-label">Quarantined</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val red" id="stat-blocked">0</div>
+      <div class="stat-label">Blocked</div>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="agent-name" style="color:#00aaff">🔍 SENTRY</div>
+    <div class="agent-role">TRAFFIC PATTERN ANALYSIS</div>
+    <div class="agent-bar"><div class="agent-bar-fill" id="bar-sentry" style="width:0%;background:#00aaff"></div></div>
+    <div class="agent-score" id="score-sentry">score: 0.000</div>
+  </div>
+
+  <div class="agent-card">
+    <div class="agent-name" style="color:#aa44ff">💉 VENOM</div>
+    <div class="agent-role">INJECTION DETECTION</div>
+    <div class="agent-bar"><div class="agent-bar-fill" id="bar-venom" style="width:0%;background:#aa44ff"></div></div>
+    <div class="agent-score" id="score-venom">score: 0.000</div>
+  </div>
+
+  <div class="agent-card">
+    <div class="agent-name" style="color:#ffaa00">🤖 HUNTER</div>
+    <div class="agent-role">BOT DETECTION</div>
+    <div class="agent-bar"><div class="agent-bar-fill" id="bar-hunter" style="width:0%;background:#ffaa00"></div></div>
+    <div class="agent-score" id="score-hunter">score: 0.000</div>
+  </div>
+
+  <div class="agent-card">
+    <div class="agent-name" style="color:var(--green)">⚖️ STRATEGIST</div>
+    <div class="agent-role">FINAL DECISION MAKER</div>
+    <div class="agent-bar"><div class="agent-bar-fill" id="bar-strategist" style="width:0%;background:var(--green)"></div></div>
+    <div class="agent-score" id="score-strategist">score: 0.000</div>
+  </div>
+</div>
+
+<!-- CENTER: Live Event Feed -->
+<div class="panel feed-panel">
+  <div class="panel-title">
+    ⬡ Live Threat Feed
+    <span style="float:right;font-weight:300;color:#3a5a6a;cursor:pointer" onclick="clearEvents()">[ CLEAR ]</span>
+  </div>
+  <div style="display:grid;grid-template-columns:90px 60px 80px 1fr 60px;gap:8px;padding:4px 14px;border-bottom:1px solid var(--border);font-size:10px;color:#2a4a5a;letter-spacing:1px;">
+    <span>TIME</span><span>ACTION</span><span>IP</span><span>PATH</span><span style="text-align:right">SCORE</span>
+  </div>
+  <div class="feed-scroll" id="event-feed"></div>
+</div>
+
+<!-- RIGHT: Agent Log -->
+<div class="panel log-panel">
+  <div class="panel-title">⬡ Agent Thoughts</div>
+  <div class="log-scroll" id="agent-log"></div>
+</div>
+
+<!-- BOTTOM: Threat Timeline -->
+<div class="panel bottom-panel">
+  <div class="panel-title" style="flex-shrink:0;width:120px;border-right:1px solid var(--border);border-bottom:none;">⬡ Threat Timeline</div>
+  <div class="threat-timeline" id="timeline"></div>
+  <div class="threat-detail" id="threat-detail">
+    <div style="color:#2a4a5a;margin-bottom:8px;">Click an event for details</div>
+  </div>
+</div>
+
+<script>
+const WS_URL = `ws://${window.location.host}/hud/ws/`;
+let ws = null;
+let timelineData = [];
+let selectedEvent = null;
+
+// ── Clock ─────────────────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+function connect() {
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    document.getElementById('connection-status').textContent = '● LIVE';
+    document.getElementById('connection-status').className = 'status-pill online';
+    addLog('system', '>>> Hydra Defense HUD connected — streaming live events');
+  };
+
+  ws.onclose = () => {
+    document.getElementById('connection-status').textContent = '● OFFLINE';
+    document.getElementById('connection-status').className = 'status-pill offline';
+    addLog('system', '>>> Connection lost — reconnecting in 3s...');
+    setTimeout(connect, 3000);
+  };
+
+  ws.onmessage = (msg) => {
+    const payload = JSON.parse(msg.data);
+
+    if (payload.type === 'history') {
+      payload.events.forEach(ev => addEvent(ev, false));
+      updateStats(payload.stats);
+    } else if (payload.type === 'event') {
+      addEvent(payload.data, true);
+      updateStats(payload.stats);
+    } else if (payload.type === 'cleared') {
+      document.getElementById('event-feed').innerHTML = '';
+      document.getElementById('agent-log').innerHTML = '';
+      timelineData = [];
+      renderTimeline();
+    }
+  };
+
+  ws.onerror = () => {
+    addLog('system', '>>> WebSocket error');
+  };
+}
+
+// ── Render Event Row ──────────────────────────────────────────────────────
+function addEvent(ev, animate) {
+  const feed = document.getElementById('event-feed');
+  const action = ev.action || 'allow';
+  const score = ev.final_score || 0;
+  const time = ev.timestamp ? new Date(ev.timestamp).toTimeString().slice(0,8) : '--:--:--';
+  const path = ev.path || '/';
+  const ip = ev.ip || '?.?.?.?';
+
+  const scoreColor = score > 0.7 ? 'var(--red)' : score > 0.4 ? 'var(--orange)' : score > 0.2 ? 'var(--yellow)' : 'var(--green)';
+
+  const row = document.createElement('div');
+  row.className = 'event-row' + (animate ? ' flash' : '');
+  row.innerHTML = `
+    <span class="event-time">${time}</span>
+    <span class="action-badge action-${action}">${action.toUpperCase()}</span>
+    <span class="event-ip">${ip}</span>
+    <span class="event-path" title="${path}">${path}</span>
+    <div class="event-score">
+      <div style="color:${scoreColor};font-size:11px;text-align:right">${score.toFixed(3)}</div>
+      <div class="score-bar"><div style="width:${score*100}%;height:100%;background:${scoreColor};border-radius:1px"></div></div>
+    </div>
+  `;
+  row.addEventListener('click', () => showDetail(ev));
+
+  if (animate) {
+    feed.insertBefore(row, feed.firstChild);
+  } else {
+    feed.appendChild(row);
+  }
+
+  // Add agent logs
+  if (ev.agents && animate) {
+    const agents = ev.agents;
+    if (agents.sentry) addLog('sentry', `[Sentry] score=${agents.sentry.score?.toFixed(2)} | ${agents.sentry.reason}`);
+    if (agents.venom) addLog('venom', `[Venom] score=${agents.venom.score?.toFixed(2)} | ${agents.venom.attack_type || agents.venom.reason}`);
+    if (agents.hunter) addLog('hunter', `[Hunter] score=${agents.hunter.score?.toFixed(2)} | ${agents.hunter.bot_type || agents.hunter.reason}`);
+    if (agents.strategist) addLog('strategist', `[Strategist] → ${action.toUpperCase()} (${score.toFixed(3)}) | ${agents.strategist.reasoning}`);
+
+    // Update agent bars
+    updateAgentBar('sentry', agents.sentry?.score || 0);
+    updateAgentBar('venom', agents.venom?.score || 0);
+    updateAgentBar('hunter', agents.hunter?.score || 0);
+    updateAgentBar('strategist', score);
+  }
+
+  // Timeline
+  timelineData.push({ score, action, event: ev });
+  if (timelineData.length > 80) timelineData.shift();
+  renderTimeline();
+
+  // Update global threat indicator
+  updateThreatLevel(score);
+}
+
+function updateAgentBar(agent, score) {
+  const bar = document.getElementById(`bar-${agent}`);
+  const scoreEl = document.getElementById(`score-${agent}`);
+  if (bar) bar.style.width = (score * 100) + '%';
+  if (scoreEl) scoreEl.textContent = `score: ${score.toFixed(3)}`;
+}
+
+function updateStats(stats) {
+  if (!stats) return;
+  document.getElementById('stat-total').textContent = stats.total || 0;
+  document.getElementById('stat-allowed').textContent = stats.allowed || 0;
+  document.getElementById('stat-quarantined').textContent = stats.quarantined || 0;
+  document.getElementById('stat-blocked').textContent = stats.blocked || 0;
+}
+
+function addLog(type, text) {
+  const log = document.getElementById('agent-log');
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.textContent = text;
+  log.insertBefore(line, log.firstChild);
+  // Keep log manageable
+  while (log.children.length > 100) log.removeChild(log.lastChild);
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timeline');
+  container.innerHTML = '';
+  const maxH = 130;
+
+  timelineData.forEach((d, i) => {
+    const bar = document.createElement('div');
+    const h = Math.max(4, d.score * maxH);
+    const color = d.score > 0.7 ? 'var(--red)' : d.score > 0.4 ? 'var(--orange)' : d.score > 0.2 ? 'var(--yellow)' : 'var(--dim)';
+    bar.className = 'timeline-bar';
+    bar.style.cssText = `height:${h}px;background:${color};opacity:${0.5 + d.score*0.5}`;
+    bar.title = `${d.action} | score: ${d.score.toFixed(3)}`;
+    bar.addEventListener('click', () => showDetail(d.event));
+    container.appendChild(bar);
+  });
+}
+
+function showDetail(ev) {
+  const detail = document.getElementById('threat-detail');
+  if (!ev || !ev.agents) {
+    detail.innerHTML = '<div style="color:#2a4a5a">No detail available</div>';
+    return;
+  }
+  detail.innerHTML = `
+    <div><span class="key">IP:</span> ${ev.ip || 'N/A'}</div>
+    <div><span class="key">Path:</span> ${ev.path || '/'}</div>
+    <div><span class="key">Action:</span> ${ev.action}</div>
+    <div><span class="key">Score:</span> ${ev.final_score?.toFixed(4)}</div>
+    <div style="margin-top:6px;color:#2a4a5a">─── Agents ───</div>
+    ${ev.agents.venom?.payload_found ? `<div><span class="key">Payload:</span> <span style="color:var(--red)">${ev.agents.venom.payload_found}</span></div>` : ''}
+    ${ev.agents.venom?.attack_type !== 'none' ? `<div><span class="key">Attack:</span> ${ev.agents.venom?.attack_type}</div>` : ''}
+    ${ev.agents.hunter?.bot_type !== 'none' ? `<div><span class="key">Bot:</span> ${ev.agents.hunter?.bot_type}</div>` : ''}
+    <div style="margin-top:4px;color:#2a4a5a">${ev.agents.strategist?.reasoning || ''}</div>
+  `;
+}
+
+function updateThreatLevel(score) {
+  const el = document.getElementById('header-threat');
+  if (score > 0.7) {
+    el.textContent = '⚠ THREAT: HIGH';
+    el.style.cssText = 'background:rgba(255,51,85,0.15);color:var(--red);border:1px solid var(--red)';
+  } else if (score > 0.4) {
+    el.textContent = '◈ THREAT: MED';
+    el.style.cssText = 'background:rgba(255,136,0,0.15);color:var(--orange);border:1px solid var(--orange)';
+  } else {
+    el.textContent = '◇ THREAT: LOW';
+    el.style.cssText = 'background:rgba(0,255,136,0.1);color:var(--green);border:1px solid var(--green)';
+  }
+}
+
+function clearEvents() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ action: 'clear' }));
+  }
+}
+
+connect();
+</script>
+</body>
+</html>

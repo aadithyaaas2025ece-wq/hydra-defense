@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Search — {% if in_shadow_realm %}DataVault{% else %}Hydra Demo{% endif %}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+  * { margin:0;padding:0;box-sizing:border-box; }
+  body { font-family:'IBM Plex Sans',sans-serif; background:#f5f5f0; color:#1a1a2e; min-height:100vh; }
+  nav { background:#1a1a2e; padding:16px 40px; display:flex; align-items:center; }
+  .nav-logo { font-family:'IBM Plex Mono',monospace; color:white; font-size:18px; font-weight:600; letter-spacing:2px; }
+  nav a { color:rgba(255,255,255,0.6); text-decoration:none; font-size:14px; margin-left:auto; margin-right:10px; }
+  .main { max-width:800px; margin:60px auto; padding:0 40px; }
+  h2 { font-size:32px; font-weight:300; margin-bottom:30px; }
+  .search-form { display:flex; gap:10px; margin-bottom:40px; }
+  input[type=text] {
+    flex:1; padding:12px 16px; border:1px solid #ddd; border-radius:4px;
+    font-size:15px; font-family:'IBM Plex Sans',sans-serif; outline:none;
+  }
+  input[type=text]:focus { border-color:#0066ff; }
+  .btn { padding:12px 24px; background:#0066ff; color:white; border:none; border-radius:4px; font-size:15px; cursor:pointer; }
+  .result-card { background:white; border:1px solid #e8e8e8; border-radius:6px; padding:20px; margin-bottom:12px; }
+  .result-name { font-weight:600; font-size:16px; margin-bottom:6px; }
+  .result-meta { color:#888; font-size:13px; }
+  .no-results { color:#888; font-style:italic; }
+  .result-count { color:#888; font-size:13px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">{% if in_shadow_realm %}DATAVAULT{% else %}HYDRA DEMO{% endif %}</div>
+  <a href="/">Home</a>
+  {% if not in_shadow_realm %}<a href="/hud/" style="color:#00ff88;font-weight:600;">🛡 HUD</a>{% endif %}
+</nav>
+<div class="main">
+  <h2>Search {% if in_shadow_realm %}Records{% else %}Users{% endif %}</h2>
+  <form class="search-form" method="GET">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by name...">
+    <button type="submit" class="btn">Search</button>
+  </form>
+  {% if query %}
+    <div class="result-count">{{ result_count }} result{{ result_count|pluralize }} for "{{ query }}"</div>
+    {% if results %}
+      {% for r in results %}
+      <div class="result-card">
+        <div class="result-name">{{ r.display_name }}</div>
+        <div class="result-meta">{{ r.location|default:"Location unknown" }} — {{ r.bio|default:"No bio"|truncatechars:80 }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="no-results">No results found.</div>
+    {% endif %}
+  {% endif %}
+</div>
+</body>
+</html>

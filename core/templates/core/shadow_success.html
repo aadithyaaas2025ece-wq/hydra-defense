@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DataVault — Admin Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+  * { margin:0;padding:0;box-sizing:border-box; }
+  body { font-family:'IBM Plex Sans',sans-serif; background:#0f1117; color:#e8e8e8; min-height:100vh; }
+  nav { background:#1a1d27; padding:14px 32px; display:flex; align-items:center; gap:20px; border-bottom:1px solid #2a2d37; }
+  .logo { font-family:'IBM Plex Mono',monospace; color:#00d4ff; font-weight:600; letter-spacing:2px; }
+  .user { color:#aaa; font-size:13px; margin-left:auto; }
+  .main { padding:40px 32px; }
+  h1 { font-size:28px; font-weight:300; margin-bottom:8px; }
+  .welcome { color:#666; margin-bottom:40px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:40px; }
+  .stat-card { background:#1a1d27; border:1px solid #2a2d37; border-radius:6px; padding:24px; }
+  .stat-val { font-size:36px; font-weight:600; color:#00d4ff; margin-bottom:4px; }
+  .stat-label { color:#666; font-size:13px; }
+  h2 { font-size:18px; font-weight:600; margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; background:#1a1d27; border-radius:6px; overflow:hidden; margin-bottom:40px; }
+  th { text-align:left; padding:12px 16px; font-size:11px; letter-spacing:1px; color:#666; border-bottom:1px solid #2a2d37; text-transform:uppercase; }
+  td { padding:12px 16px; border-bottom:1px solid #1a2030; font-size:13px; font-family:'IBM Plex Mono',monospace; }
+  tr:last-child td { border-bottom:none; }
+  .badge { padding:2px 8px; border-radius:2px; font-size:11px; }
+  .badge-admin { background:rgba(255,51,85,0.15); color:#ff3355; }
+  .badge-user { background:rgba(0,212,255,0.1); color:#00d4ff; }
+  .notice { background:rgba(255,204,0,0.1); border:1px solid rgba(255,204,0,0.3); color:#ffcc00; padding:12px 16px; border-radius:4px; font-size:13px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DATAVAULT PRO</div>
+  <span style="color:#666;font-size:13px">Admin Panel</span>
+  <div class="user">👤 {{ username }} &nbsp;|&nbsp; <span style="color:#ff3355">Admin</span></div>
+</nav>
+
+<div class="main">
+  <h1>Welcome back, <strong>{{ username }}</strong></h1>
+  <p class="welcome">DataVault Admin Console — Full system access granted</p>
+
+  <div class="notice">
+    ⚠ You have admin access to all {{ fake_users|length }}00+ user records and transaction history.
+  </div>
+
+  <div class="grid">
+    <div class="stat-card"><div class="stat-val">{{ fake_users|length }}00</div><div class="stat-label">Total Users</div></div>
+    <div class="stat-card"><div class="stat-val">{{ fake_transactions|length }}K</div><div class="stat-label">Transactions</div></div>
+    <div class="stat-card"><div class="stat-val">$2.4M</div><div class="stat-label">Revenue (fake)</div></div>
+    <div class="stat-card"><div class="stat-val">98.7%</div><div class="stat-label">Uptime</div></div>
+  </div>
+
+  <h2>Recent Users</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Email</th><th>Username</th><th>Role</th><th>Joined</th></tr>
+    </thead>
+    <tbody>
+      {% for user in fake_users %}
+      <tr>
+        <td>#{{ user.id }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.username }}</td>
+        <td><span class="badge {% if user.is_admin %}badge-admin{% else %}badge-user{% endif %}">{% if user.is_admin %}Admin{% else %}User{% endif %}</span></td>
+        <td>{{ user.date_joined|slice:":10" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Recent Transactions</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Amount</th><th>Card</th><th>Status</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      {% for tx in fake_transactions %}
+      <tr>
+        <td>{{ tx.id|slice:":16" }}...</td>
+        <td>{{ tx.currency }} {{ tx.amount }}</td>
+        <td>{{ tx.card_brand }} ****{{ tx.card_last4 }}</td>
+        <td>{{ tx.status }}</td>
+        <td>{{ tx.created_at|slice:":10" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="color:#333;font-size:11px;font-family:'IBM Plex Mono',monospace;text-align:center;">
+    <!-- All data above is synthetic. You are in the Shadow Realm. Your activity is being logged. -->
+  </p>
+</div>
+</body>
+</html>

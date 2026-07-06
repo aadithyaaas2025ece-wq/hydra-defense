@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% if in_shadow_realm %}DataVault Pro{% else %}Hydra Demo Site{% endif %}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #f5f5f0;
+    --card: #ffffff;
+    --accent: #1a1a2e;
+    --blue: #0066ff;
+    --text: #1a1a2e;
+    --muted: #888;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  nav {
+    background: var(--accent);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .nav-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 2px;
+  }
+
+  nav a {
+    color: rgba(255,255,255,0.6);
+    text-decoration: none;
+    font-size: 14px;
+    margin-left: auto;
+    margin-right: 10px;
+  }
+
+  nav a:hover { color: white; }
+
+  .hero {
+    max-width: 900px;
+    margin: 80px auto;
+    padding: 0 40px;
+    text-align: center;
+  }
+
+  h1 { font-size: 48px; font-weight: 300; margin-bottom: 16px; }
+  h1 strong { font-weight: 600; }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 18px;
+    margin-bottom: 40px;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border-radius: 4px;
+    font-size: 15px;
+    text-decoration: none;
+    font-family: 'IBM Plex Sans', sans-serif;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid #ccc; }
+
+  /* Hydra debug banner (only visible to developers) */
+  .hydra-debug {
+    position: fixed;
+    bottom: 0; right: 0;
+    background: rgba(0,0,0,0.85);
+    color: #00ff88;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 10px 14px;
+    border-top-left-radius: 6px;
+    max-width: 300px;
+    line-height: 1.7;
+  }
+
+  .hydra-debug .action-allow { color: #00ff88; }
+  .hydra-debug .action-monitor { color: #ffcc00; }
+  .hydra-debug .action-quarantine { color: #ff8800; }
+  .hydra-debug .action-block { color: #ff3355; }
+
+  /* Shadow realm looks identical — that's the point! */
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">{% if in_shadow_realm %}DATAVAULT{% else %}HYDRA DEMO{% endif %}</div>
+  <a href="/search/">Search</a>
+  <a href="/login/">Login</a>
+  {% if not in_shadow_realm %}
+  <a href="/hud/" style="color:#00ff88;font-weight:600;">🛡 HUD</a>
+  {% endif %}
+</nav>
+
+<div class="hero">
+  <h1>Welcome to <strong>{% if in_shadow_realm %}DataVault Pro{% else %}Hydra Demo{% endif %}</strong></h1>
+  <p class="subtitle">
+    {% if in_shadow_realm %}
+      Enterprise data management platform. Securely access your records.
+    {% else %}
+      A demo site protected by the Hydra Multi-Agent Defense System.
+    {% endif %}
+  </p>
+  <div class="cta-row">
+    <a href="/search/" class="btn btn-primary">Search Records</a>
+    <a href="/login/" class="btn btn-secondary">Log In</a>
+  </div>
+</div>
+
+<!-- Developer debug panel — shows Hydra's decision -->
+{% if hydra_action != 'allow' or threat_score > 0 %}
+<div class="hydra-debug">
+  🐍 HYDRA VERDICT<br>
+  Action: <span class="action-{{ hydra_action }}">{{ hydra_action|upper }}</span><br>
+  Score: {{ threat_score|floatformat:3 }}<br>
+  Shadow: {{ in_shadow_realm|yesno:"YES,no" }}
+</div>
+{% endif %}
+
+</body>
+</html>
